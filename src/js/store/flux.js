@@ -3,14 +3,15 @@ const getState = ({ getStore, getActions, setStore }) => {
 		store: {
 			contacts: [],
 		},
-		actions: { //aquí van a ir los fletch por que son las acciones que vamos a requerir
-
+		actions: {
+			// Se mantiene igual: función para obtener todos los contactos
 			getAllContacts: () => {
 				fetch("https://playground.4geeks.com/apis/fake/contact/agenda/adrianacp10_agenda")
 					.then(data => data.json())
 					.then(data => setStore({ contacts: data }));
 			},
 
+			// Se mantiene igual: función para crear un nuevo contacto
 			createContact: async (contacts) => {
 				await fetch("https://playground.4geeks.com/apis/fake/contact/", {
 					method: 'POST',
@@ -19,70 +20,85 @@ const getState = ({ getStore, getActions, setStore }) => {
 					},
 					body: JSON.stringify(contacts)
 				});
-				return getActions.getAllContacts();
+				
+				// Se actualiza el estado de la tienda para reflejar el nuevo contacto 
+				setStore({ contacts: [...getStore().contacts] });
 			},
 
-			updateContact: (contact, id) => {
-				fetch("https://playground.4geeks.com/apis/fake/contact/${id}", {
-					method: 'PUT',
-					body: JSON.stringify(contact),
-					headers: {
-						'Content-type': 'application/json'
+			// Se actualizó: función para actualizar un contacto existente
+			updateContact: async (contact, id) => {
+				try {
+					const response = await fetch(`https://playground.4geeks.com/apis/fake/contact/${id}`, {
+						method: 'PUT',
+						body: JSON.stringify(contact),
+						headers: {
+							'Content-type': 'application/json'
+						}
+					});
+					
+					if (!response.ok) {
+						throw new Error('Error al actualizar el contacto');
 					}
-				});
-
-				const prevStore = getStore();
-				const index = prevStore.contacts.findIndex(contact => contact.id == id);
-
-				const newContacts = [...prevStore.contacts]
-				newContacts[index] = contact
-
-				const newStore = {
-					...prevStore,
-					contacts: newContacts
+					
+					// Se actualiza el estado de la tienda para reflejar los cambios
+					const prevStore = getStore();
+					const index = prevStore.contacts.findIndex(contact => contact.id == id);
+	
+					const newContacts = [...prevStore.contacts];
+					newContacts[index] = contact;
+	
+					const newStore = {
+						...prevStore,
+						contacts: newContacts
+					};
+	
+					setStore(newStore);
+				} catch (error) {
+					console.error('Error al actualizar el contacto:', error);
 				}
-
-				setStore(newStore);
 			},
 
-			deleteContactFetch: (id) => {
-				fetch(`https://playground.4geeks.com/apis/fake/contact/${id}`, {
-					method: 'DELETE',
-					headers: {
-						'Content-type': 'application/json'
+			// Se actualizó: función para eliminar un contacto
+			deleteContact: async (id) => {
+				try {
+					const response = await fetch(`https://playground.4geeks.com/apis/fake/contact/${id}`, {
+						method: 'DELETE'
+					});
+
+					if (!response.ok) {
+						throw new Error('Error al eliminar el contacto');
 					}
-				});
+					
+					// Se actualiza el estado de la tienda para reflejar los cambios
+					const prevStore = getStore();
+					const newContacts = prevStore.contacts.filter(contact => contact.id !== id);
+					
+					const newStore = {
+						...prevStore,
+						contacts: newContacts
+					};
+					
+					setStore(newStore);
+				} catch (error) {
+					console.error('Error al eliminar el contacto:', error);
+				}
 			},
 
-			deleteContact: (id) => {
-				const prevStore = getStore();
-				const newContacts = prevStore.contacts.filter(contact => contact.id !== id);
-			
-				const newStore = {
-					...prevStore,
-					contacts: newContacts
-				};
-			
-				setStore(newStore);
-				getActions().deleteContactFetch(id);
-			},
-
+			// Se mantiene igual: función para agregar un nuevo contacto
 			addContact: (contact) => {
 				const prevStore = getStore();
 				const actions = getActions();
 
-				const newContacts = [...prevStore.contacts, contact]
+				const newContacts = [...prevStore.contacts, contact];
 
 				const newStore = {
 					...prevStore,
 					contacts: newContacts
-				}
+				};
 
 				setStore(newStore);
 				actions.createContact(contact);
-
-
-			},
+			}
 		}
 	};
 };

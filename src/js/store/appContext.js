@@ -22,10 +22,8 @@ const injectContext = PassedComponent => {
 		);
 
 		useEffect(() => {
-			const { actions } = state;
-			actions.getAllContacts();
-		}, [state.store.contacts.length]
-		);
+			state.actions.getAllContacts(); // Llama a la acción para cargar las agendas desde la API
+		  }, []);
 
 
 		
